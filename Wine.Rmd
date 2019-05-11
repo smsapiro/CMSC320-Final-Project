@@ -7,10 +7,68 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(leaflet)
+
+winedata = read.csv("winemag-data_first150k.csv")
+
+# Download .shp file on the web:
+download.file("http://thematicmapping.org/downloads/TM_WORLD_BORDERS_SIMPL-0.3.zip" , destfile="world_shape_file.zip")
+unzip("world_shape_file.zip", overwrite = FALSE)
+ 
+# Read the file with the rgdal library in R
+library(rgdal)
+world_spdf=readOGR( dsn= getwd() , layer="TM_WORLD_BORDERS_SIMPL-0.3")
 ```
 
 ```{r}
-mydata = read.csv("winemag-data_first150k.csv")
-mydata 
+wine_country = winedata %>%
+  dplyr::select(-description) %>%
+  dplyr::group_by(country) %>%
+  dplyr::summarize(wine_count=n())
+
+wine_country
+
+wine_country$country = as.character(wine_country$country)
+wine_country$country[wine_country$country == "US"] ="United States"
+
+world_spdf@data = dplyr::rename(world_spdf@data,country=NAME)
+world_spdf@data$country = as.character(world_spdf@data$country)
+
+winemap = right_join(wine_country, world_spdf@data, by="country")
+world_spdf@data = winemap
 ```
 
+```{r}
+
+pal <- colorNumeric(
+  palette = "YlOrRd",
+  domain = world_spdf@data$wine_count,
+  na.color = "transparent"
+  )
+
+country_label=paste("Country: ", world_spdf@data$country,"<br/>", "Wine_count: ", world_spdf@data$wine_count) %>%
+lapply(htmltools::HTML)
+
+# Final Map
+leaflet(world_spdf) %>% 
+  addTiles(options = tileOptions(minZoom = 2))  %>% 
+  setView( lat=10, lng=0 , zoom=2) %>%
+  addPolygons(
+    fillColor = ~pal(wine_count),
+    stroke = FALSE,
+    fillOpacity = 0.9, 
+    color="white", 
+    weight = 0.3,
+    highlight = highlightOptions( weight = 5, color = "white", fillOpacity = 0.3, bringToFront = TRUE),
+    label = country_label,
+    labelOptions = labelOptions( style = list("font-weight" = "normal", padding = "3px 8px"), textsize = "13px", direction = "auto")
+  ) %>%
+  addLegend( pal=pal, values=~wine_count, opacity=0.9, title = "Wine count", position = "bottomleft" )
+
+```
+
+
+
+```{r}
+```
