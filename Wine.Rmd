@@ -38,19 +38,42 @@ winedata %>%
   select(country, points, variety, winery)
 ```
 
-Let's start summarizing our dataset in order to get more useful information we can use for data analysis. You have probably noticed that our dataset is a set of wine reviews for various wines. We are going to need to extract the year from the "title" column in the data set in order to use it with our summarization and plotting. First, we use str_extract to extract the year using regular expressions from the title. In the same line we create a new column, year, to store the extracted string. Next, we need to convert the year, which is still a string, to an integer, so we use type_convert. 
+Let's start summarizing our dataset in order to get more useful information we can use for data analysis. You have probably noticed that our dataset is a set of wine reviews for various wines. We are going to need to extract the year from the "title" column in the data set in order to use it with our summarization and plotting. First, we use str_extract to extract the year using regular expressions from the title. https://www.rdocumentation.org/packages/stringr/versions/1.4.0/topics/str_extract is a link to the documentation on the extract method. In the same line we create a new column, year, to store the extracted string. Next, we need to convert the year, which is still a string, to an integer, so we use type_convert. https://www.rdocumentation.org/packages/utils/versions/3.6.0/topics/type.convert is a link to read more on type convert. Next, we filter out all of the NA values and then finally summarize the price and points columns in order to make an average of them - we will be using this average later in our graphs.  
 
 ```{r}
-winedata$year <- str_extract(winedata$title, "(\\d){4}")
+winedata <- winedata %>%
+  mutate(year = str_extract(title, "(\\d){4}"))
 
-winedata %>%
+winedata <- winedata %>%
   type_convert(col_types = cols(year = col_integer())) %>%
-  filter(year > 0) %>%
-  select(title, year)
+  filter(year > 0, year < 2020, price > 0)
 
-winedata %>%
+winedata<- winedata %>%
   group_by(variety, year, winery, province, region_1, country) %>%
   summarize(avg_price = mean(price), avg_rating = mean(points))
+
+winedata
 ```
 
+Now, we are going to plot some data to learn some things about our dataset. First, we need to include the ggplot2 library to use some of the ggplot methods. Then, we are going to create a new column for the ratio between the average rating and the average price for each wine. This ratio will be higher if the wine is rated high and is cheap and it will be lower if the wine is rated low and expensive. Overall, the more efficient wine will be rated higher. Next, we start the wine plot by grouping by country, summarizing the average rating to price ratio for each country, and summarizing the total number of wines for each country. We find the total number of wines in order to remove any countries that have less than 50 wine reviews. This is because some countries, like Ukraine, only have a small number of reviews and become an outliar in the graph. Lastly, we need to plot the data as a bar graph using ggplot. By looking at the graph, we can see that Romania has the best rating to price ratio and Canada has the lowest ratio.   
+  
+```{r}
+library(ggplot2)
+
+winedata <- winedata %>%
+  mutate(ratingpriceratio = avg_rating/avg_price)
+
+wineplot <- winedata %>%
+  group_by(country) %>%
+  summarize(avg_ratingpriceratio = mean(ratingpriceratio), wine_count = n()) %>%
+  filter(wine_count > 50) %>%
+  ggplot(mapping = aes(x = country, y = avg_ratingpriceratio)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+   labs(title="Average Rating to Price Ratio by Country",
+         x = "Country",
+         y = "Average Rating to Price Ratio")
+
+wineplot
+```
 
