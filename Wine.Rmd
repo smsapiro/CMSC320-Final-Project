@@ -14,37 +14,43 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 The first step in the data curation process is to actually get the data. Kaggle is a great resource for datasets and is where we procured this dataset. It is also possible to scrape datasets from the web, and this dataset was originally made from scrapped data from https://www.winemag.com/. Once you find a dataset you like, download the CSV and put it in your project folder. Once you have done this you can load it using the read.csv command used below.  
+
 ```{r}
 winedata = read.csv("winemag-data-130k-v2.csv")
 
-winedata <-winedata %>%
+winedata <- winedata %>%
   select(-description)
 ```
 
 Lets explore our data set. To display the entire data set, simply type the name of your data set, which in our case is winedata. We will be using syntactical sugar available from the dplyr package. This allows us to use piping by doing "%>%" and includes many of the operations we will be using later such as select and filter. For more information on the dplyr package and its features you can refer to the documentation at https://www.rdocumentation.org/packages/dplyr/versions/0.7.8 The code below prints the first few elements of our dataset
+
 ```{r}
-winedata
  winedata %>%
   head()
 ```
 
 What if we want to display only wine reviews from a certain country or a certain province? We can filter our dataset based on attribute values. We can then select certain attributes using the select keyword. Below is an example of filtering our dataset by country (only selecting reviews where the country of origin is Spain) and by points (where the number of points are >90). We then use the select keyword to select only certain attributes to display. Since we filtered based on country and points we will select those attributes as well as identifying attributes to display.  
+
 ```{r}
 winedata %>% 
   filter(country == "Spain") %>%
-  filter(points > 90)
+  filter(points > 90) %>%
   select(country, points, variety, winery)
 ```
 
-Let's start summarizing our dataset in order to get more useful information we can use for data analysis. You have probably noticed that our dataset is a set of wine  reviews for various wines 
+Let's start summarizing our dataset in order to get more useful information we can use for data analysis. You have probably noticed that our dataset is a set of wine reviews for various wines. We are going to need to extract the year from the "title" column in the data set in order to use it with our summarization and plotting. First, we use str_extract to extract the year using regular expressions from the title. In the same line we create a new column, year, to store the extracted string. Next, we need to convert the year, which is still a string, to an integer, so we use type_convert. 
+
 ```{r}
-<<<<<<< HEAD
-winedata = read.csv("winemag-data_first150k.csv")
-winedata 
-=======
-winedata %>% 
-  filter(variety == "Riesling", winery == "St. Julian")
->>>>>>> cc750e05f640672740810f265f6215ee749eee28
+winedata$year <- str_extract(winedata$title, "(\\d){4}")
+
+winedata %>%
+  type_convert(col_types = cols(year = col_integer())) %>%
+  filter(year > 0) %>%
+  select(title, year)
+
+winedata %>%
+  group_by(variety, year, winery, province, region_1, country) %>%
+  summarize(avg_price = mean(price), avg_rating = mean(points))
 ```
 
 
