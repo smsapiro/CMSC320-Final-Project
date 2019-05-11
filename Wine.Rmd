@@ -29,6 +29,21 @@ Lets explore our data set. To display the entire data set, simply type the name 
   head()
 ```
 
+We notice that our dataset has some duplicates. The way to remove them is to use the command unique.
+```{r}
+winedata <-winedata %>% unique()
+```
+
+
+Lets take a look at the distribution of ratings.
+```{r}
+winedata %>%
+  group_by(points) %>%
+  summarize(n = n()) %>%
+  ggplot(mapping=aes(x=points, y=n)) +
+    geom_bar(stat="identity")
+```
+
 What if we want to display only wine reviews from a certain country or a certain province? We can filter our dataset based on attribute values. We can then select certain attributes using the select keyword. Below is an example of filtering our dataset by country (only selecting reviews where the country of origin is Spain) and by points (where the number of points are >90). We then use the select keyword to select only certain attributes to display. Since we filtered based on country and points we will select those attributes as well as identifying attributes to display.  
 
 ```{r}
