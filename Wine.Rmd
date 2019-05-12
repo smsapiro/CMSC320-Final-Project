@@ -29,6 +29,13 @@ Lets explore our data set. To display the entire data set, simply type the name 
   head()
 ```
 
+If we examine our data set very closely, we see that there are some duplicates. We are able to clear these duplicates by using the unique method.
+
+```{r}
+winedata <- winedata %>% unique()
+```
+
+
 What if we want to display only wine reviews from a certain country or a certain province? We can filter our dataset based on attribute values. We can then select certain attributes using the select keyword. Below is an example of filtering our dataset by country (only selecting reviews where the country of origin is Spain) and by points (where the number of points are >90). We then use the select keyword to select only certain attributes to display. Since we filtered based on country and points we will select those attributes as well as identifying attributes to display.  
 
 ```{r}
