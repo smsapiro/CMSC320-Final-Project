@@ -12,7 +12,7 @@ library(tidyverse)
 library(leaflet)
 ```
 
-The first step in the data curation process is to actually get the data. Kaggle is a great resource for datasets and is where we procured this dataset. It is also possible to scrape datasets from the web, and this dataset was originally made from scrapped data from https://www.winemag.com/. Once you find a dataset you like, download the CSV and put it in your project folder. Once you have done this you can load it using the read.csv command used below.  
+The first step in the data curation process is to actually get the data. Kaggle is a great resource for datasets and is where we procured this dataset. It is also possible to scrape datasets from the web, and this dataset was originally made from scrapped data of wine reviews from https://www.winemag.com/. Once you find a dataset you like, download the CSV and put it in your project folder. Once you have done this you can load it using the read.csv command used below.  
 
 ```{r}
 winedata = read.csv("winemag-data-130k-v2.csv")
@@ -28,13 +28,8 @@ Lets explore our data set. To display the entire data set, simply type the name 
   head()
 ```
 
-We notice that our dataset has some duplicates. The way to remove them is to use the command unique.
-```{r}
-winedata <-winedata %>% unique()
-```
 
-
-Lets take a look at the distribution of ratings.
+Lets take a look at the distribution of wine ratings (rated from 80 to 100).
 ```{r}
 winedata %>%
   group_by(points) %>%
@@ -90,6 +85,7 @@ wineplot <- winedata %>%
 
 wineplot
 ```
+
 
 ```{r}
 
