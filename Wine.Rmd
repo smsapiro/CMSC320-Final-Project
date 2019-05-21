@@ -20,17 +20,15 @@ The first step in the data curation process is to actually get the data. Kaggle 
 winedata = read.csv("winemag-data-130k-v2.csv")
 ```
 
-Lets explore our data set. To display the entire data set, simply type the name of your data set, which in our case is winedata. We will be using syntactical sugar available from the dplyr package. This allows us to use piping by doing "%>%" and includes many of the operations we will be using later such as select and filter. For more information on the dplyr package and its features you can refer to the documentation at https://www.rdocumentation.org/packages/dplyr/versions/0.7.8 The code below prints the first few elements of our dataset
+Lets explore our data set. To display the entire data set, simply type the name of your data set, which in our case is winedata. We will be using syntactical sugar available from the dplyr package. This allows us to use piping by doing "%>%" and includes many of the operations we will be using later such as select and filter. For more information on the dplyr package and its features you can refer to the documentation at https://www.rdocumentation.org/packages/dplyr/versions/0.7.8 The code below prints the first few elements of our dataset.
 
 ```{r}
  winedata %>%
   head()
 ```
 
-<<<<<<< HEAD
 
 Lets take a look at the distribution of wine ratings (rated from 80 to 100).
-=======
 We notice that our dataset has some unwanted information, which we remove with select.
 
 ```{r}
@@ -40,7 +38,6 @@ winedata = winedata %>%
 ```
 
 Lets take a look at the distribution of ratings. 
->>>>>>> 0724daac1d7e84bee3db9efd427fb9a0f41de934
 ```{r}
 winedata %>%
   group_by(points) %>%
@@ -102,25 +99,59 @@ wineplot
 ```
 
 
-After determining who has the best wine for the best price, we can pose the question if the price affects the quality of the wine? I assume expensive wine would rank higher than innexpensive wine, but we can plot some linear regression lines ourselves to see the difference. First, we only use countries with a significant amount of data collected for them - in this case, Chile, France, Italy, Spain, and the US have an abundance of wine data that will lead to an indisputable conclusion. Next, after filtering, we can plot the average rating over the average price of each wine. Then, we distinguish the data points by country, using the color parameter in the ggplot function. Lastly, we can add geom_smooth(method = lm) to create a line of best fit for our data for each country. By looking at the graph, we can see that there is clearly a linear dependence between price and rating. French wine increases almost 3 points for a 10 dollar increase in price. On the other hand, US wine increases at a slower rate at about 1 point for every 10 dollar increase. Italian wine has a very similar slope to US wine too.  
+After determining who has the best wine for the best price, we can pose the question if the price affects the quality of the wine? I assume expensive wine would rank higher than innexpensive wine, but we can plot some linear regression lines ourselves to see the difference. First, we only use countries with a significant amount of data collected for them - in this case, Chile, France, Italy, Spain, and the US have an abundance of wine data that will lead to an indisputable conclusion. Next, after filtering, we can plot the average rating over the average price of each wine. We then use a facet grid which creates a seperate plot for each country. Lastly, we can add geom_smooth(method = lm) to create a line of best fit for our data for each country.
 
 ```{r}
-wineplot <- winedata %>%
-  group_by(country, avg_price, avg_rating) %>%
-  summarize(wine_count = n()) %>%
-  filter(wine_count > 50) %>%
-  ggplot(mapping = aes(x = avg_price, y = avg_rating, color = country)) +
-  geom_smooth(method = lm) +
-  labs(title="Average rating over average price, by country",
-         x = "Average Price",
-         y = "Average Rating")
+winedata %>%
+ filter(country == "Chile" 
+        | country == "US" 
+        | country == "Italy"
+        | country == "Spain" 
+        | country == "France") %>%
+ ggplot(aes(x=avg_rating, y=avg_price)) +
+ facet_grid(. ~country, scales = "free") +
+ geom_point() +
+ geom_smooth(method=lm, se = FALSE) +
+ ylab("Average Price") +
+ xlab("rating") +
+ ggtitle("Affect of Average Rating on price") 
+```
+What do we notice here? We can see that our resulting graphs do not look very meaningful because we have outliers that skew the resulting axis for price. We need to remove these outliers in order to generate a graph we have confidence in. In order to do this we can examine our entire data set and find the mean and standard deviation of the avg_price. A general rule of thumb is an outlier can be determined if it is mean +- 3*standard_deviation. We use that boundary below and determine that we must filter out all wines priced at greater than $157.4. For more information on outliers and how to find them visit https://www.statisticshowto.datasciencecentral.com/find-outliers/. 
 
-wineplot
+```{r}
+winedata %>%
+  ungroup() %>%
+  summarize(mean_price=mean(avg_price), sd_price = sd(avg_price)) %>%
+  slice(rep(1, 4)) %>%
+  mutate(multiplier = c(-2, -1.5, 1.5, 2)) %>%
+  mutate(outlier_limit = mean_price + multiplier * sd_price)
+
+winedata <- winedata %>%
+  filter(avg_price <= 157)
 ```
 
-Now we are going to investigate the linear regression properties of avg_rating versus average_price
+We now repeat the operation we did above but with our filtered dataset with outlier prices removed. Notice how France and Italy have the steepest lines indicating that increases in ratings have more of an effect on the average price then in the US, Spain or Chile. 
+
 ```{r}
-auto_fit <- lm(avg_rating~avg_price, data=winedata)
+winedata %>%
+ filter(country == "Chile" 
+        | country == "US" 
+        | country == "Italy"
+        | country == "Spain" 
+        | country == "France") %>%
+ ggplot(aes(x=avg_rating, y=avg_price)) +
+ facet_grid(. ~country) +
+ geom_point() +
+ geom_smooth(method=lm) +
+ ylab("Average Price") +
+ xlab("rating") +
+ ggtitle("Affect of Average Rating on price") 
+```
+
+Now we are going to investigate the linear regression properties of avg_rating versus average_price grouped by countries. We want to determine whether there is a relationship between rating and price using p values. the lm function here. The way the function works
+```{r}
+
+auto_fit <- lm(avg_price~avg_rating, data=winedata)
 auto_fit
 ```
 
