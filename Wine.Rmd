@@ -88,8 +88,7 @@ wineplot <- winedata %>%
 wineplot
 ```
 
-<<<<<<< HEAD
-=======
+
 After determining who has the best wine for the best price, we can pose the question if the price affects the quality of the wine? I assume expensive wine would rank higher than innexpensive wine, but we can plot some linear regression lines ourselves to see the difference. First, we only use countries with a significant amount of data collected for them - in this case, Chile, France, Italy, Spain, and the US have an abundance of wine data that will lead to an indisputable conclusion. Next, after filtering, we can plot the average rating over the average price of each wine. Then, we distinguish the data points by country, using the color parameter in the ggplot function. Lastly, we can add geom_smooth(method = lm) to create a line of best fit for our data for each country. By looking at the graph, we can see that there is clearly a linear dependence between price and rating. French wine increases almost 3 points for a 10 dollar increase in price. On the other hand, US wine increases at a slower rate at about 1 point for every 10 dollar increase. Italian wine has a very similar slope to US wine too.  
 
 ```{r}
@@ -106,7 +105,12 @@ wineplot <- winedata %>%
 wineplot
 ```
 
->>>>>>> afc8962549d036b377f78e241f7f624d08d26ab5
+Now we are going to investigate the linear regression properties of avg_rating versus average_price
+```{r}
+auto_fit <- lm(avg_rating~avg_price, data=winedata)
+auto_fit
+```
+
 
 ```{r}
 
