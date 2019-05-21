@@ -237,4 +237,4 @@ leaflet(world_spdf) %>%
   ) %>%
   addLegend( pal=pal, values=~wine_count, opacity=0.9, title = "Wine count", position = "bottomleft")
 ```
-Fantastic! This map clearly and visually shows where the wines in our dataset originated from. The country with the greatest number of wines in this dataset appears to be the US, with 42472 wines! This makes sense, considering that our dataset comes from a US company. France and Italy are also huge producers of wine, as are Chile and Argentina. Other countries, such as India and China,  are very minimally represented in our dataset.
+Fantastic! This map clearly and visually shows where the wines in our dataset originated from. The country with the greatest number of wines in this dataset appears to be the US, with 42472 wines! This makes sense, considering that our dataset comes from a US company. France and Italy are also huge producers of wine, as are Chile and Argentina. Other countries, such as India and China, are very minimally represented in our dataset.
