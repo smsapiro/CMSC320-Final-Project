@@ -7,11 +7,10 @@ output: html_document
 
 Before beginning any data analysis, it is imperative for you to load all of the packages you plan to use. The tidyverse package includes many other r packages that are commonly used such a ggplot and dplyr. 
 ```{r setup, include=FALSE}
-library(tidyverse)
-library(stringr)
 knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(leaflet)
 ```
-
 
 The first step in the data curation process is to actually get the data. Kaggle is a great resource for datasets and is where we procured this dataset. It is also possible to scrape datasets from the web, and this dataset was originally made from scrapped data from https://www.winemag.com/. Once you find a dataset you like, download the CSV and put it in your project folder. Once you have done this you can load it using the read.csv command used below.  
 
@@ -29,10 +28,19 @@ Lets explore our data set. To display the entire data set, simply type the name 
   head()
 ```
 
-If we examine our data set very closely, we see that there are some duplicates. We are able to clear these duplicates by using the unique method.
-
+We notice that our dataset has some duplicates. The way to remove them is to use the command unique.
 ```{r}
-winedata <- winedata %>% unique()
+winedata <-winedata %>% unique()
+```
+
+
+Lets take a look at the distribution of ratings.
+```{r}
+winedata %>%
+  group_by(points) %>%
+  summarize(n = n()) %>%
+  ggplot(mapping=aes(x=points, y=n)) +
+    geom_bar(stat="identity")
 ```
 
 
@@ -43,6 +51,7 @@ winedata %>%
   filter(country == "Spain") %>%
   filter(points > 90) %>%
   select(country, points, variety, winery)
+
 ```
 
 Let's start summarizing our dataset in order to get more useful information we can use for data analysis. You have probably noticed that our dataset is a set of wine reviews for various wines. We are going to need to extract the year from the "title" column in the data set in order to use it with our summarization and plotting. First, we use str_extract to extract the year using regular expressions from the title. https://www.rdocumentation.org/packages/stringr/versions/1.4.0/topics/str_extract is a link to the documentation on the extract method. In the same line we create a new column, year, to store the extracted string. Next, we need to convert the year, which is still a string, to an integer, so we use type_convert. https://www.rdocumentation.org/packages/utils/versions/3.6.0/topics/type.convert is a link to read more on type convert. Next, we filter out all of the NA values and then finally summarize the price and points columns in order to make an average of them - we will be using this average later in our graphs.  
@@ -55,7 +64,7 @@ winedata <- winedata %>%
   type_convert(col_types = cols(year = col_integer())) %>%
   filter(year > 0, year < 2020, price > 0)
 
-winedata<- winedata %>%
+winedata <- winedata %>%
   group_by(variety, year, winery, province, region_1, country) %>%
   summarize(avg_price = mean(price), avg_rating = mean(points))
 
@@ -84,3 +93,78 @@ wineplot <- winedata %>%
 wineplot
 ```
 
+After determining who has the best wine for the best price, we can pose the question if the price affects the quality of the wine? I assume expensive wine would rank higher than innexpensive wine, but we can plot some linear regression lines ourselves to see the difference. First, we only use countries with a significant amount of data collected for them - in this case, Chile, France, Italy, Spain, and the US have an abundance of wine data that will lead to an indisputable conclusion. Next, after filtering, we can plot the average rating over the average price of each wine. Then, we distinguish the data points by country, using the color parameter in the ggplot function. Lastly, we can add geom_smooth(method = lm) to create a line of best fit for our data for each country. By looking at the graph, we can see that there is clearly a linear dependence between price and rating. French wine increases almost 3 points for a 10 dollar increase in price. On the other hand, US wine increases at a slower rate at about 1 point for every 10 dollar increase. Italian wine has a very similar slope to US wine too.  
+
+```{r}
+wineplot <- winedata %>%
+  group_by(country, avg_price, avg_rating) %>%
+  summarize(wine_count = n()) %>%
+  filter(wine_count > 50) %>%
+  ggplot(mapping = aes(x = avg_price, y = avg_rating, color = country)) +
+  geom_smooth(method = lm) +
+  labs(title="Average rating over average price, by country",
+         x = "Average Price",
+         y = "Average Rating")
+
+wineplot
+```
+
+
+```{r}
+
+# Download .shp file on the web:
+download.file("http://thematicmapping.org/downloads/TM_WORLD_BORDERS_SIMPL-0.3.zip" , destfile="world_shape_file.zip")
+unzip("world_shape_file.zip", overwrite = FALSE)
+ 
+# Read the file with the rgdal library in R
+library(rgdal)
+world_spdf=readOGR( dsn= getwd() , layer="TM_WORLD_BORDERS_SIMPL-0.3")
+```
+
+```{r}
+winedata
+
+wine_country = winedata %>%
+  dplyr::group_by(country) %>%
+  dplyr::summarize(wine_count=n())
+
+wine_country
+
+wine_country$country = as.character(wine_country$country)
+wine_country$country[wine_country$country == "US"] ="United States"
+
+world_spdf@data = dplyr::rename(world_spdf@data,country=NAME)
+world_spdf@data$country = as.character(world_spdf@data$country)
+
+winemap = right_join(wine_country, world_spdf@data, by="country")
+world_spdf@data = winemap
+```
+
+```{r}
+
+pal <- colorNumeric(
+  palette = "YlOrRd",
+  domain = world_spdf@data$wine_count,
+  na.color = "transparent"
+  )
+
+country_label=paste("Country: ", world_spdf@data$country,"<br/>", "Wine_count: ", world_spdf@data$wine_count) %>%
+lapply(htmltools::HTML)
+
+# Final Map
+leaflet(world_spdf) %>% 
+  addTiles(options = tileOptions(minZoom = 2))  %>% 
+  setView( lat=10, lng=0 , zoom=2) %>%
+  addPolygons(
+    fillColor = ~pal(wine_count),
+    stroke = FALSE,
+    fillOpacity = 0.9, 
+    color="white", 
+    weight = 0.3,
+    highlight = highlightOptions( weight = 5, color = "white", fillOpacity = 0.3, bringToFront = TRUE),
+    label = country_label,
+    labelOptions = labelOptions( style = list("font-weight" = "normal", padding = "3px 8px"), textsize = "13px", direction = "auto")
+  ) %>%
+  addLegend( pal=pal, values=~wine_count, opacity=0.9, title = "Wine count", position = "bottomleft" )
+
+```
