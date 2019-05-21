@@ -38,6 +38,7 @@ winedata %>%
     geom_bar(stat="identity")
 ```
 
+
 What if we want to display only wine reviews from a certain country or a certain province? We can filter our dataset based on attribute values. We can then select certain attributes using the select keyword. Below is an example of filtering our dataset by country (only selecting reviews where the country of origin is Spain) and by points (where the number of points are >90). We then use the select keyword to select only certain attributes to display. Since we filtered based on country and points we will select those attributes as well as identifying attributes to display.  
 
 ```{r}
@@ -45,6 +46,7 @@ winedata %>%
   filter(country == "Spain") %>%
   filter(points > 90) %>%
   select(country, points, variety, winery)
+
 ```
 
 Let's start summarizing our dataset in order to get more useful information we can use for data analysis. You have probably noticed that our dataset is a set of wine reviews for various wines. We are going to need to extract the year from the "title" column in the data set in order to use it with our summarization and plotting. First, we use str_extract to extract the year using regular expressions from the title. https://www.rdocumentation.org/packages/stringr/versions/1.4.0/topics/str_extract is a link to the documentation on the extract method. In the same line we create a new column, year, to store the extracted string. Next, we need to convert the year, which is still a string, to an integer, so we use type_convert. https://www.rdocumentation.org/packages/utils/versions/3.6.0/topics/type.convert is a link to read more on type convert. Next, we filter out all of the NA values and then finally summarize the price and points columns in order to make an average of them - we will be using this average later in our graphs.  
@@ -57,7 +59,7 @@ winedata <- winedata %>%
   type_convert(col_types = cols(year = col_integer())) %>%
   filter(year > 0, year < 2020, price > 0)
 
-winedata<- winedata %>%
+winedata <- winedata %>%
   group_by(variety, year, winery, province, region_1, country) %>%
   summarize(avg_price = mean(price), avg_rating = mean(points))
 
@@ -86,6 +88,25 @@ wineplot <- winedata %>%
 wineplot
 ```
 
+<<<<<<< HEAD
+=======
+After determining who has the best wine for the best price, we can pose the question if the price affects the quality of the wine? I assume expensive wine would rank higher than innexpensive wine, but we can plot some linear regression lines ourselves to see the difference. First, we only use countries with a significant amount of data collected for them - in this case, Chile, France, Italy, Spain, and the US have an abundance of wine data that will lead to an indisputable conclusion. Next, after filtering, we can plot the average rating over the average price of each wine. Then, we distinguish the data points by country, using the color parameter in the ggplot function. Lastly, we can add geom_smooth(method = lm) to create a line of best fit for our data for each country. By looking at the graph, we can see that there is clearly a linear dependence between price and rating. French wine increases almost 3 points for a 10 dollar increase in price. On the other hand, US wine increases at a slower rate at about 1 point for every 10 dollar increase. Italian wine has a very similar slope to US wine too.  
+
+```{r}
+wineplot <- winedata %>%
+  group_by(country, avg_price, avg_rating) %>%
+  summarize(wine_count = n()) %>%
+  filter(wine_count > 50) %>%
+  ggplot(mapping = aes(x = avg_price, y = avg_rating, color = country)) +
+  geom_smooth(method = lm) +
+  labs(title="Average rating over average price, by country",
+         x = "Average Price",
+         y = "Average Rating")
+
+wineplot
+```
+
+>>>>>>> afc8962549d036b377f78e241f7f624d08d26ab5
 
 ```{r}
 
