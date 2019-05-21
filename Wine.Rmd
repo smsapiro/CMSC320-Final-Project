@@ -124,6 +124,7 @@ auto_fit <- lm(avg_rating~avg_price, data=winedata)
 auto_fit
 ```
 
+As we have demonstrated with the above graphs, a picture is worth a thousand words. So lets see how valuable a map will be! Specifically, let's make an interactive map displaying the origins of the wines in our dataset. To accomplish this task, we use the leaflet library ("https://rstudio.github.io/leaflet/shapes.html"), which allows for excellent interactive plotting in R. Depicting the countries is a little trickier however, we will need to import another third-party dataset that describes country borders. This information is available at "http://thematicmapping.org/downloads/TM_WORLD_BORDERS_SIMPL-0.3.zip" and we load it into a special object called a "Spatial Polygons Data Frame."
 
 ```{r, warning=FALSE}
 # Download .shp file on the web:
@@ -135,48 +136,64 @@ library(rgdal)
 world_spdf=readOGR( dsn= getwd() , layer="TM_WORLD_BORDERS_SIMPL-0.3")
 ```
 
+Now have our dataset that describes wines, and another dataset that describes countries and their locations on the map. So we need to join these two together using the almighty join command! It is important to note that we join on the attribute "country", which is shared among both datasets, in order to combine them together.
+
 ```{r}
+
+#Count the number of wines from each country
 wine_country = winedata %>%
   dplyr::group_by(country) %>%
   dplyr::summarize(wine_count=n())
 
-wine_country
-
+#prepare the wine data for joining
 wine_country$country = as.character(wine_country$country)
 wine_country$country[wine_country$country == "US"] ="United States"
 
+#prepare the world data for joining
 world_spdf@data = dplyr::rename(world_spdf@data,country=NAME)
 world_spdf@data$country = as.character(world_spdf@data$country)
 
+#Join!
 winemap = right_join(wine_country, world_spdf@data, by="country")
 world_spdf@data = winemap
 ```
 
-```{r}
+Now that we have the combined wine and world data set, we are ready to create our map. Our map will have certain characteristics: A color palette depicted the number of wines from that area, labels identifying each country on the map and displaying the number of wines from there, and a legend that clearly explains this information. 
 
+```{r}
 pal <- colorNumeric(
   palette = "YlOrRd",
   domain = world_spdf@data$wine_count,
   na.color = "transparent"
   )
 
-country_label=paste("Country: ", world_spdf@data$country,"<br/>", "Wine_count: ", world_spdf@data$wine_count) %>%
+country_label=paste(world_spdf@data$country,"<br/>", "Number of wines: ", world_spdf@data$wine_count) %>%
 lapply(htmltools::HTML)
 
 # Final Map
 leaflet(world_spdf) %>% 
+  #Tiles are how the map is displayed. We also want to limit the zoom.
   addTiles(options = tileOptions(minZoom = 2))  %>% 
-  setView( lat=10, lng=0 , zoom=2) %>%
+  #Initialize the view
+  setView(lat=10, 
+          lng=0,
+          zoom=2) %>%
+  #Display the countries and make them interactive on highlight
   addPolygons(
     fillColor = ~pal(wine_count),
     stroke = FALSE,
     fillOpacity = 0.9, 
     color="white", 
     weight = 0.3,
-    highlight = highlightOptions( weight = 5, color = "white", fillOpacity = 0.3, bringToFront = TRUE),
+    highlight = highlightOptions(weight = 5, 
+                                 color = "white",
+                                 fillOpacity = 0.3,
+                                 bringToFront = TRUE),
     label = country_label,
-    labelOptions = labelOptions( style = list("font-weight" = "normal", padding = "3px 8px"), textsize = "13px", direction = "auto")
+    labelOptions = labelOptions(style = list("font-weight" = "normal", padding = "3px 8px"), 
+                                textsize = "13px",  
+                                direction = "auto")
   ) %>%
   addLegend( pal=pal, values=~wine_count, opacity=0.9, title = "Wine count", position = "bottomleft" )
-
 ```
+Fantastic! This map clearly and visually shows where the wines in our dataset originated from. The country with the greatest number of wines in this dataset appears to be the US, with 42472 wines! This makes sense, considering that our dataset comes from a US company. France and Itally are also huge producers of wine, as are Chile and Argentina. Other countries, such as India and China,  are very minimally represented in our dataset.
