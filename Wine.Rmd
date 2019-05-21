@@ -5,6 +5,10 @@ date: "5/11/2019"
 output: html_document
 ---
 
+Introduction:
+
+Hello and welcome to our wine data analysis! It is important to understand how to manipulate and analyze data - wine data in this case. It is important because we can learn information from these massive data sets that can help companies or individuals solve problems and predict future markets and business opportunities. Our wine data analysis will provide interested readers with new insights to make them more knowledgeable about the wine market.   
+
 Before beginning any data analysis, it is imperative for you to load all of the packages you plan to use. The tidyverse package includes many other r packages that are commonly used such a ggplot and dplyr. We will use Leaflet as well when we create a map later on. 
 
 ```{r setup, include=FALSE}
@@ -44,7 +48,6 @@ winedata %>%
   ggplot(mapping=aes(x=points, y=n)) +
     geom_bar(stat="identity")
 ```
-
 
 What if we want to display only wine reviews from a certain country or a certain province? We can filter our dataset based on attribute values. We can then select certain attributes using the select keyword. Below is an example of filtering our dataset by country (only selecting reviews where the country of origin is Spain) and by points (where the number of points are >90). We then use the select keyword to select only certain attributes to display. Since we filtered based on country and points we will select those attributes as well as identifying attributes to display.  
 
@@ -239,3 +242,7 @@ leaflet(world_spdf) %>%
 ```
 
 Fantastic! This map clearly and visually shows where the wines in our dataset originated from. The country with the greatest number of wines in this dataset appears to be the US, with 42472 wines! This makes sense, considering that our dataset comes from a US company. France and Italy are also huge producers of wine, as are Chile and Argentina. Other countries, such as India and China, are very minimally represented in our dataset.
+
+Conclusion: 
+
+Whether you're a wine drinker or a data scientist, we hope our analysis of this wine data set has proven useful and has taught you something about wine around the world and the data behind it. 
