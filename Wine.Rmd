@@ -51,13 +51,8 @@ What if we want to display only wine reviews from a certain country or a certain
 winedata %>% 
   filter(country == "Spain") %>%
   filter(points > 90) %>%
-<<<<<<< HEAD
   select(country, points, variety, winery) %>%
   head()
-=======
-  select(country, points, variety, winery)
->>>>>>> afc8962549d036b377f78e241f7f624d08d26ab5
-
 ```
 
 Let's start summarizing our dataset in order to get more useful information we can use for data analysis. You have probably noticed that our dataset is a set of wine reviews for various wines. We are going to need to extract the year from the "title" column in the data set in order to use it with our summarization and plotting. First, we use str_extract to extract the year using regular expressions from the title. https://www.rdocumentation.org/packages/stringr/versions/1.4.0/topics/str_extract is a link to the documentation on the extract method. In the same line we create a new column, year, to store the extracted string. Next, we need to convert the year, which is still a string, to an integer, so we use type_convert. https://www.rdocumentation.org/packages/utils/versions/3.6.0/topics/type.convert is a link to read more on type convert. Next, we filter out all of the NA values and then finally summarize the price and points columns in order to make an average of them - we will be using this average later in our graphs.  
@@ -118,7 +113,7 @@ wineplot
 ```
 
 
-```{r}
+```{r, warning=FALSE}
 # Download .shp file on the web:
 download.file("http://thematicmapping.org/downloads/TM_WORLD_BORDERS_SIMPL-0.3.zip" , destfile="world_shape_file.zip")
 unzip("world_shape_file.zip", overwrite = FALSE)
