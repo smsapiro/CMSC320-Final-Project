@@ -97,7 +97,6 @@ wineplot <- winedata %>%
 wineplot
 ```
 
-
 We can pose the question of whether the rating affects the price of the wine. We assume expensive wine would rank higher than inexpensive wine, but we can plot some linear regression lines ourselves to see the difference. First, we only use countries with a significant amount of data collected for them - in this case, Chile, France, Italy, Spain, and the US have an abundance of wine data that will lead to an indisputable conclusion. Next, after filtering, we can plot the average price over the average rating of each wine. We then use a facet grid which creates a separate plot for each country. Lastly, we can add geom_smooth(method = lm) to create a line of best fit for our data for each country.
 
 ```{r}
@@ -108,9 +107,10 @@ winedata %>%
  geom_point() +
  geom_smooth(method=lm, se = FALSE) +
  ylab("Rating") +
- xlab("Average Rating") +
+ xlab("Average Price") +
  ggtitle("Affect of Average Price on Rating")  
 ```
+
 What do we notice here? We can see that our resulting graphs do not look very meaningful because we have outliers that skew the resulting axis for price. We need to remove these outliers in order to generate a graph we have confidence in. In order to do this we can examine our entire data set and find the mean and standard deviation of the avg_price. A general rule of thumb is an outlier can be determined if it is mean +- 3*standard_deviation. We use that boundary below and determine that we must filter out all wines priced at greater than $157.4. For more information on outliers and how to find them visit https://www.statisticshowto.datasciencecentral.com/find-outliers/. We then filter to remove the outliers from the data set. 
 
 ```{r}
@@ -135,7 +135,7 @@ winedata %>%
  geom_point() +
  geom_smooth(method=lm) +
  ylab("Rating") +
- xlab("Average Rating") +
+ xlab("Average Price") +
  ggtitle("Affect of Average Price on Rating") 
 ```
 
@@ -237,4 +237,5 @@ leaflet(world_spdf) %>%
   ) %>%
   addLegend( pal=pal, values=~wine_count, opacity=0.9, title = "Wine count", position = "bottomleft")
 ```
+
 Fantastic! This map clearly and visually shows where the wines in our dataset originated from. The country with the greatest number of wines in this dataset appears to be the US, with 42472 wines! This makes sense, considering that our dataset comes from a US company. France and Italy are also huge producers of wine, as are Chile and Argentina. Other countries, such as India and China, are very minimally represented in our dataset.
