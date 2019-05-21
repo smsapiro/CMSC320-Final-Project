@@ -6,8 +6,10 @@ output: html_document
 ---
 
 Before beginning any data analysis, it is imperative for you to load all of the packages you plan to use. The tidyverse package includes many other r packages that are commonly used such a ggplot and dplyr. 
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+options(warn = -1)
 library(tidyverse)
 library(leaflet)
 ```
@@ -16,9 +18,6 @@ The first step in the data curation process is to actually get the data. Kaggle 
 
 ```{r}
 winedata = read.csv("winemag-data-130k-v2.csv")
-
-winedata <- winedata %>%
-  select(-description)
 ```
 
 Lets explore our data set. To display the entire data set, simply type the name of your data set, which in our case is winedata. We will be using syntactical sugar available from the dplyr package. This allows us to use piping by doing "%>%" and includes many of the operations we will be using later such as select and filter. For more information on the dplyr package and its features you can refer to the documentation at https://www.rdocumentation.org/packages/dplyr/versions/0.7.8 The code below prints the first few elements of our dataset
@@ -28,13 +27,15 @@ Lets explore our data set. To display the entire data set, simply type the name 
   head()
 ```
 
-We notice that our dataset has some duplicates. The way to remove them is to use the command unique.
+We notice that our dataset has some unwanted information, which we remove with select.
+
 ```{r}
-winedata <-winedata %>% unique()
+winedata = winedata %>% 
+  select(-taster_twitter_handle) %>%
+  select(-description)
 ```
 
-
-Lets take a look at the distribution of ratings.
+Lets take a look at the distribution of ratings. 
 ```{r}
 winedata %>%
   group_by(points) %>%
@@ -49,12 +50,16 @@ What if we want to display only wine reviews from a certain country or a certain
 winedata %>% 
   filter(country == "Spain") %>%
   filter(points > 90) %>%
-  select(country, points, variety, winery)
+  select(country, points, variety, winery) %>%
+  head()
+
 ```
 
 Let's start summarizing our dataset in order to get more useful information we can use for data analysis. You have probably noticed that our dataset is a set of wine reviews for various wines. We are going to need to extract the year from the "title" column in the data set in order to use it with our summarization and plotting. First, we use str_extract to extract the year using regular expressions from the title. https://www.rdocumentation.org/packages/stringr/versions/1.4.0/topics/str_extract is a link to the documentation on the extract method. In the same line we create a new column, year, to store the extracted string. Next, we need to convert the year, which is still a string, to an integer, so we use type_convert. https://www.rdocumentation.org/packages/utils/versions/3.6.0/topics/type.convert is a link to read more on type convert. Next, we filter out all of the NA values and then finally summarize the price and points columns in order to make an average of them - we will be using this average later in our graphs.  
 
 ```{r}
+winedata
+
 winedata <- winedata %>%
   mutate(year = str_extract(title, "(\\d){4}"))
 
@@ -62,7 +67,7 @@ winedata <- winedata %>%
   type_convert(col_types = cols(year = col_integer())) %>%
   filter(year > 0, year < 2020, price > 0)
 
-winedata<- winedata %>%
+winedata <- winedata %>%
   group_by(variety, year, winery, province, region_1, country) %>%
   summarize(avg_price = mean(price), avg_rating = mean(points))
 
@@ -92,7 +97,6 @@ wineplot
 ```
 
 ```{r}
-
 # Download .shp file on the web:
 download.file("http://thematicmapping.org/downloads/TM_WORLD_BORDERS_SIMPL-0.3.zip" , destfile="world_shape_file.zip")
 unzip("world_shape_file.zip", overwrite = FALSE)
@@ -103,8 +107,6 @@ world_spdf=readOGR( dsn= getwd() , layer="TM_WORLD_BORDERS_SIMPL-0.3")
 ```
 
 ```{r}
-winedata
-
 wine_country = winedata %>%
   dplyr::group_by(country) %>%
   dplyr::summarize(wine_count=n())
